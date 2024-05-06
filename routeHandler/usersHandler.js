@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const checkLogin = require("../middlewares/checkLogin");
 
 const userSchema = require("../schemas/userSchema");
 const router = express.Router();
@@ -9,7 +10,7 @@ const router = express.Router();
 const User = new mongoose.model("User", userSchema);
 
 //get all user:
-router.get("/", async (req, res) => {
+router.get("/", checkLogin, async (req, res) => {
   try {
     const users = await User.find();
     res.status(200).json({
@@ -32,6 +33,7 @@ router.post("/signup", async (req, res) => {
       email: req.body.email,
       phone: req.body.phone,
       password: hashedPassword,
+      role:'CUSTOMER',
     });
     await newuser.save();
     res.status(200).json({
@@ -64,9 +66,8 @@ router.post("/login", async (req, res) => {
       );
       if (isValidPassword) {
         // generate a token and send to the user
-
         const token = jwt.sign(
-          { email: user[0].email, userId: user[0]._id },
+          { email: user[0].email, userId: user[0]._id, name:user[0].name },
           process.env.JWT_SECRET,
           { expiresIn: "1h" }
         );
